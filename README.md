@@ -2,11 +2,15 @@
 
 Projet Data For Good - Saison 14
 
+![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)
+![Staging](https://github.com/<owner>/<repo>/actions/workflows/staging.yml/badge.svg)
+
 ## Structure du projet
 
-```
-├── backend/    # API et traitement des données (Python)
-├── frontend/   # Interface utilisateur
+```text
+├── backend/              # API Django/DRF et traitement des données météo
+├── frontend/             # Interface utilisateur Nuxt
+├── .github/workflows/    # Pipelines CI/CD
 ```
 
 ## Pour commencer
