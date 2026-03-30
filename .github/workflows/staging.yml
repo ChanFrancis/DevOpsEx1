@@ -1,4 +1,4 @@
-name: Build and Push Images
+name: Staging Deploy
 
 on:
   push:
@@ -10,54 +10,111 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  validate:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js backend
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend lint
+        working-directory: backend
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test -- --ci
+
+      - name: Setup Node.js frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test -- --ci
+
+      - name: Run npm audit backend
+        working-directory: backend
+        run: npm audit --audit-level=high
+
+      - name: Run npm audit frontend
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-report.json
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
+
   build-and-push:
+    needs: validate
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
 
     steps:
-
-      - name: checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # uncomment for main branch
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch origin main --unshallow --tags --force
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
 
-          TAG=$(git tag --list "v*.*.*" --merged origin/main --sort=-v:refname | head -n1)
-          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+      - name: Print tag
+        run: echo "Current tag $IMAGE_TAG"
 
+      - name: Lowercase repo name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      - name: print  tag
-        run: echo " Current tag   $IMAGE_TAG"
-
-
-
-      - name: lowercase repo name
-        run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-
-      - name: log in to the Container REGISTRY
+      - name: Log in to container registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push Backend
-        uses: docker/build-push-action@v5
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
-          push : true
+          push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
 
-
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v5
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: true
@@ -65,8 +122,17 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ env.IMAGE_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
 
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-24.04
 
-# test with tailscale connexion
+    steps:
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Lowercase repo name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
         with:
@@ -74,26 +140,21 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
-
-
-
-
-      - name: Change backend name image in the compose file
+      - name: Update backend image in compose
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << EOF
           sudo sed -i "s|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:${{ env.IMAGE_TAG }}|" /opt/d4g-staging/docker-compose.yml
           EOF
 
-
-      - name: Change frontend name image in the compose file
+      - name: Update frontend image in compose
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << EOF
           sudo sed -i "s|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:${{ env.IMAGE_TAG }}|" /opt/d4g-staging/docker-compose.yml
           EOF
 
-      - name: Clean up & Deploy
+      - name: Deploy staging
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.CI_USER }}@${{ secrets.CI_TAILSCALE_HOST }} << EOF
             sudo docker compose -f /opt/d4g-staging/docker-compose.yml down --remove-orphans
             sudo docker compose -f /opt/d4g-staging/docker-compose.yml pull
             sudo docker compose -f /opt/d4g-staging/docker-compose.yml up -d
