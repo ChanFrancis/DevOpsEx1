@@ -26,7 +26,7 @@ const heroLinks = ref<ButtonProps[]>([
         <UPageHero
             headline="Aujourd'hui"
             title="Moy. nationale : --,-°C"
-            description="+-,-°C par rapport à la moy. des 30 dernières années, Encore un autre conflit"
+            description="+-,-°C par rapport à la moy. des 30 dernières années, généré un conflit"
             :links="heroLinks"
             :ui="{
                 wrapper: 'text-start',
