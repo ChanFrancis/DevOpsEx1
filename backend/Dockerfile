@@ -1,3 +1,4 @@
+# TODO: remplacer par l'image DHI Python trouvée sur https://dhi.io (ex: docker.io/dhi/python:3.12)
 FROM python:3.12-slim-bookworm
 
 WORKDIR /app
