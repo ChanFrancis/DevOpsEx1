@@ -1,0 +1,28 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/ChanFrancis/DevOpsEx1/blob/main/vex.json",
+  "author": "ChanFrancis",
+  "timestamp": "2026-04-28T00:00:00Z",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "@id": "https://nvd.nist.gov/vuln/detail/CVE-2023-44270",
+        "name": "CVE-2023-44270"
+      },
+      "products": [
+        {
+          "@id": "pkg:docker/ghcr.io/chanfrancis/devopsex1/frontend",
+          "subcomponents": [
+            {
+              "@id": "pkg:npm/postcss"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "PostCSS is used only at build time; the vulnerability affects runtime parsing of untrusted CSS which does not occur in this application."
+    }
+  ]
+}

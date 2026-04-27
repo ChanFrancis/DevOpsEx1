@@ -2,11 +2,15 @@
 
 Projet Data For Good - Saison 14
 
+![CI](https://github.com/ChanFrancis/DevOpsEx1/actions/workflows/ci.yml/badge.svg)
+![Staging](https://github.com/ChanFrancis/DevOpsEx1/actions/workflows/staging.yml/badge.svg)
+
 ## Structure du projet
 
-```
-├── backend/    # API et traitement des données (Python)
-├── frontend/   # Interface utilisateur
+```text
+├── backend/              # API Django/DRF et traitement des données météo
+├── frontend/             # Interface utilisateur Nuxt
+├── .github/workflows/    # Pipelines CI/CD
 ```
 
 ## Pour commencer
@@ -33,6 +37,20 @@ Extraits :
 ### :tanabata_tree:Branches et commits : Workflow de contribution
 
 Pour que tout le monde adopte les mêmes pratiques, nous avons posé des principes relatifs aux branches et aux commits. A lire impérativement avant de commencer.
+
+## Lancer le projet en local
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| API Django | http://localhost:8000 |
+| Frontend | http://localhost:3000 |
+| Prometheus | http://localhost:9090 |
+| Swagger | http://localhost:8000/api/docs/ |
 
 #### 0. **Paramétrer git**
 

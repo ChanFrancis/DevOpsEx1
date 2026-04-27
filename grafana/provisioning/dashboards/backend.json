@@ -1,0 +1,61 @@
+{
+  "title": "Backend Météo",
+  "uid": "backend-meteo",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requêtes HTTP par seconde",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "rate(django_http_requests_total_by_method_total[1m])",
+          "legendFormat": "{{ method }}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Réponses HTTP par statut",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "rate(django_http_responses_total_by_status_total[1m])",
+          "legendFormat": "HTTP {{ status }}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latence des requêtes (p95)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "histogram_quantile(0.95, rate(django_http_requests_latency_seconds_bucket[5m]))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Requêtes en cours",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus" },
+          "expr": "django_http_requests_in_flight",
+          "legendFormat": "In flight"
+        }
+      ]
+    }
+  ]
+}
