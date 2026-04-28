@@ -13,6 +13,9 @@ on:
       - test/**
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   backend:
     name: Backend CI
@@ -171,8 +174,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/backend:latest
-            ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/devopsex1-backend:latest
+            ghcr.io/${{ github.repository_owner }}/devopsex1-backend:${{ github.sha }}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -180,5 +183,5 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/frontend:latest
-            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/devopsex1-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/devopsex1-frontend:${{ github.sha }}
