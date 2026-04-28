@@ -3,7 +3,7 @@
 Projet Data For Good - Saison 14
 
 ![CI](https://github.com/ChanFrancis/DevOpsEx1/actions/workflows/ci.yml/badge.svg)
-![Staging](https://github.com/ChanFrancis/DevOpsEx1/actions/workflows/staging.yml/badge.svg)
+![Pre-commit](https://github.com/ChanFrancis/DevOpsEx1/actions/workflows/pre-commit.yml/badge.svg)
 
 ## Structure du projet
 
