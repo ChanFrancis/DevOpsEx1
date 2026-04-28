@@ -1,5 +1,4 @@
-# TODO: remplacer par l'image DHI Node trouvée sur https://dhi.io (ex: docker.io/dhi/node:24)
-FROM node:24-alpine AS build
+FROM dhi.io/node:24-alpine3.23 AS build
 
 WORKDIR /app
 
@@ -11,8 +10,7 @@ COPY . .
 
 RUN npm run build
 
-# TODO: remplacer par l'image DHI Node trouvée sur https://dhi.io (ex: docker.io/dhi/node:24)
-FROM node:24-alpine AS prod
+FROM dhi.io/node:24-alpine3.23 AS prod
 
 WORKDIR /app
 
